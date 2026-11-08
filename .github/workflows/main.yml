@@ -43,27 +43,14 @@ jobs:
 
       
       
-      - name: Download Gradle manually
+     
+      - name: Check runner Gradle
         shell: bash
         run: |
-          mkdir -p "$RUNNER_TEMP/gradle"
+          echo "Checking installed Gradle..."
+          command -v gradle
+          gradle --version
 
-          curl -fL \
-            --retry 5 \
-            --retry-all-errors \
-            --retry-delay 15 \
-            --connect-timeout 30 \
-            --max-time 900 \
-            https://downloads.gradle.org/distributions/gradle-8.7-bin.zip \
-            -o "$RUNNER_TEMP/gradle/gradle.zip"
-
-          unzip -q "$RUNNER_TEMP/gradle/gradle.zip" \
-            -d "$RUNNER_TEMP/gradle"
-
-          echo "$RUNNER_TEMP/gradle/gradle-8.7/bin" >> "$GITHUB_PATH"
-
-      - name: Verify Gradle
-        run: gradle --version
 
 
       - name: Build APK
