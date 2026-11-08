@@ -59,6 +59,8 @@ public class LauncherActivity extends Activity {
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         Window w = getWindow();
+        // Ask Android to draw the current system wallpaper behind the launcher.
+        w.addFlags(android.view.WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER);
         if (android.os.Build.VERSION.SDK_INT >= 21) {
             w.setStatusBarColor(BG);
             w.setNavigationBarColor(BG);
@@ -116,11 +118,12 @@ public class LauncherActivity extends Activity {
 
     private void buildLayout() {
         LinearLayout root = vertical();
-        root.setBackgroundColor(BG);
+        root.setBackgroundColor(Color.TRANSPARENT);
         root.setPadding(dp(20), dp(12), dp(20), dp(10));
 
         // HOME: clock, date, search, dock and app-drawer affordance only.
         homePanel = vertical();
+        homePanel.setBackgroundColor(Color.TRANSPARENT);
         homePanel.setGravity(Gravity.CENTER_HORIZONTAL);
         homePanel.setPadding(0, dp(12), 0, dp(8));
 
@@ -169,16 +172,34 @@ public class LauncherActivity extends Activity {
         dockParams.bottomMargin = dp(12);
         homePanel.addView(dock, dockParams);
 
-        TextView allApps = text("▲    ALL APPS", 12, ACCENT);
+        LinearLayout homeActions = new LinearLayout(this);
+        homeActions.setOrientation(LinearLayout.HORIZONTAL);
+        homeActions.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams actionsParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(44));
+        actionsParams.setMargins(dp(8), 0, dp(8), dp(4));
+        homePanel.addView(homeActions, actionsParams);
+
+        TextView allApps = text("▲  ALL APPS", 12, ACCENT);
         allApps.setGravity(Gravity.CENTER);
         allApps.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         allApps.setBackground(rounded(SURFACE, 22));
-        LinearLayout.LayoutParams allParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(44));
-        allParams.setMargins(dp(35), 0, dp(35), dp(4));
-        homePanel.addView(allApps, allParams);
+        homeActions.addView(allApps, new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.MATCH_PARENT, 1f));
         allApps.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View v) { showDrawer(); }
+        });
+
+        TextView wallpaper = text("WALLPAPER", 12, TEXT);
+        wallpaper.setGravity(Gravity.CENTER);
+        wallpaper.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        wallpaper.setBackground(rounded(SURFACE, 22));
+        LinearLayout.LayoutParams wallpaperParams = new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.MATCH_PARENT, 1f);
+        wallpaperParams.leftMargin = dp(8);
+        homeActions.addView(wallpaper, wallpaperParams);
+        wallpaper.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) { launchWallpaperPicker(); }
         });
 
         homePanel.setOnTouchListener(new View.OnTouchListener() {
@@ -198,6 +219,7 @@ public class LauncherActivity extends Activity {
 
         // APP DRAWER: hidden until user taps ALL APPS or swipes upward.
         drawerPanel = vertical();
+        drawerPanel.setBackgroundColor(BG);
         drawerPanel.setVisibility(View.GONE);
 
         LinearLayout drawerHeader = new LinearLayout(this);
@@ -291,6 +313,19 @@ public class LauncherActivity extends Activity {
         Date now = new Date();
         clockView.setText(new SimpleDateFormat("HH:mm", Locale.getDefault()).format(now));
         dateView.setText(new SimpleDateFormat("EEEE, d MMMM", Locale.getDefault()).format(now));
+    }
+
+    private void launchWallpaperPicker() {
+        try {
+            Intent intent = new Intent(Intent.ACTION_SET_WALLPAPER);
+            startActivity(Intent.createChooser(intent, "Choose wallpaper"));
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, "Wallpaper picker is not available on this device",
+                    Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            Toast.makeText(this, "Unable to open wallpaper picker",
+                    Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void launchSearch() {
