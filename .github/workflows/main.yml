@@ -42,21 +42,25 @@ jobs:
             "build-tools;35.0.0"
 
       
+      
       - name: Download Gradle manually
+        shell: bash
         run: |
-          for i in 1 2 3 4 5; do
-            echo "Download attempt $i"
-            if curl -fL --retry 3 --retry-delay 10 \
-              https://services.gradle.org/distributions/gradle-8.7-bin.zip \
-              -o gradle.zip; then
-              break
-            fi
-            sleep 15
-          done
+          mkdir -p "$RUNNER_TEMP/gradle"
 
-          test -s gradle.zip
-          unzip -q gradle.zip
-          echo "$GITHUB_WORKSPACE/gradle-8.7/bin" >> "$GITHUB_PATH"
+          curl -fL \
+            --retry 5 \
+            --retry-all-errors \
+            --retry-delay 15 \
+            --connect-timeout 30 \
+            --max-time 900 \
+            https://downloads.gradle.org/distributions/gradle-8.7-bin.zip \
+            -o "$RUNNER_TEMP/gradle/gradle.zip"
+
+          unzip -q "$RUNNER_TEMP/gradle/gradle.zip" \
+            -d "$RUNNER_TEMP/gradle"
+
+          echo "$RUNNER_TEMP/gradle/gradle-8.7/bin" >> "$GITHUB_PATH"
 
       - name: Verify Gradle
         run: gradle --version
